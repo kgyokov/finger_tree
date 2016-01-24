@@ -21,46 +21,45 @@
 -type finger_tree(E) ::
     empty
     |{single,E}
-    |{deep,[E],finger_tree(tree_node(E)),[E]}.
+    |{deep,any(),[E],finger_tree(tree_node(E)),[E]}.
 
 
--spec pushl(E,finger_tree(E)) -> finger_tree(E).
--spec pushr(finger_tree(E),E) -> finger_tree(E).
+%%-spec pushl(E,finger_tree(E)) -> finger_tree(E).
+%%-spec pushr(finger_tree(E),E) -> finger_tree(E).
 
-pushl(A,empty)                  ->  {single,A};
-pushl(A,{single,B})             ->  deep([A],empty,[B]);
-pushl(A,{deep,[B,C,D,E],M,SF})  ->  deep([A,B],pushl({node3,C,D,E},M),SF);
-pushl(A,{deep,PR,M,SF})         ->  deep([A|PR],M,SF).
+pushl(A,empty)                      ->  {single,A};
+pushl(A,{single,B})                 ->  deep([A],empty,[B]);
+pushl(A,{deep,_,[B,C,D,E],M,SF})    ->  deep([A,B],pushl(node3(C,D,E),M),SF);
+pushl(A,{deep,_,PR,M,SF})           ->  deep([A|PR],M,SF).
 
-pushr(empty,A)                  ->  {single,A};
-pushr({single,B},A)             ->  deep([B],empty,[A]);
-pushr({deep,PR,M,[E,D,C,B]},A)  ->  deep(PR,pushr({node3,E,D,C},M),[B,A]);
-pushr({deep,PR,M,SF},A)         ->  deep(PR,M,SF++[A]).
+pushr(empty,A)                      ->  {single,A};
+pushr({single,B},A)                 ->  deep([B],empty,[A]);
+pushr({deep,_,PR,M,[E,D,C,B]},A)    ->  deep(PR,pushr(node3(E,D,C),M),[B,A]);
+pushr({deep,_,PR,M,SF},A)           ->  deep(PR,M,SF++[A]).
 
 
 %%
 %% Reducers
 %%
 
--spec reducer(Fun,XS,Z) -> Z when
-    Fun :: fun((E,Z) -> Z),
-    XS ::
-        tree_node(E)
-        |finger_tree(E)
-        |[E].
--spec reducel(Fun,Z,XS) -> Z when
-    Fun :: fun((Z,E) -> Z),
-    XS ::
-        tree_node(E)
-        |finger_tree(E)
-        |[E].
+%%-spec reducer(Fun,XS,Z) -> Z when
+%%    Fun :: fun((E,Z) -> Z),
+%%    XS ::
+%%        tree_node(E)
+%%        |finger_tree(E)
+%%        |[E].
+%%-spec reducel(Fun,Z,XS) -> Z when
+%%    Fun :: fun((Z,E) -> Z),
+%%    XS ::
+%%        tree_node(E)
+%%        |finger_tree(E)
+%%        |[E].
 
-reducer(Fun,{node2,A,B},Z)      -> Fun(A,Fun(B,Z));
-reducer(Fun,{node3,A,B,C},Z)    -> Fun(A,Fun(B,Fun(C,Z)));
-
+reducer(Fun,{node2,_,A,B},Z)    -> Fun(A,Fun(B,Z));
+reducer(Fun,{node3,_,A,B,C},Z)  -> Fun(A,Fun(B,Fun(C,Z)));
 reducer(_Fun,empty,Z)           -> Z;
 reducer(Fun,{single,X},Z)       -> Fun(X,Z);
-reducer(Fun,{deep,PR,M,SF},Z)   ->
+reducer(Fun,{deep,_,PR,M,SF},Z) ->
     Fun1 = fun(A,B) -> reducer(Fun,A,B)  end,
     Fun2 = fun(A,B) -> reducer(Fun1,A,B) end,
     Fun1(PR,Fun2(M,Fun1(SF,Z)));
@@ -68,12 +67,11 @@ reducer(Fun,{deep,PR,M,SF},Z)   ->
 reducer(Fun,L,Z) when is_list(L) -> lists:foldr(Fun,Z,L).
 
 
-reducel(Fun,Z,{node2,B,A})      -> Fun(Fun(Z,B),A);
-reducel(Fun,Z,{node3,C,B,A})    -> Fun(Fun(Fun(Z,C),B),A);
-
+reducel(Fun,Z,{node2,_,B,A})    -> Fun(Fun(Z,B),A);
+reducel(Fun,Z,{node3,_,C,B,A})  -> Fun(Fun(Fun(Z,C),B),A);
 reducel(_Fun,Z,empty)           -> Z;
 reducel(Fun,Z,{single,X})       -> Fun(Z,X);
-reducel(Fun,Z,{deep,PR,M,SF})   ->
+reducel(Fun,Z,{deep,_,PR,M,SF}) ->
     Fun1 = fun(A,B) -> reducel(Fun,A,B)  end,
     Fun2 = fun(A,B) -> reducel(Fun1,A,B) end,
     Fun1(Fun2(Fun1(Z,PR),M),SF);
@@ -86,8 +84,8 @@ reducel(Fun,Z,L) when is_list(L) ->
 %% Conversion
 %%
 
--spec to_tree([E]) -> finger_tree(E).
--spec to_list(finger_tree(E)) -> [E].
+%%-spec to_tree([E]) -> finger_tree(E).
+%%-spec to_list(finger_tree(E)) -> [E].
 to_tree(L) when is_list(L) -> lists:foldl(fun pushr/2,empty,L).
 to_list(T) -> reducer(fun(H,XS) -> [H|XS] end,T,[]).
 
@@ -100,7 +98,7 @@ to_list(T) -> reducer(fun(H,XS) -> [H|XS] end,T,[]).
 
 viewl(empty)                -> nil;
 viewl({single,A})           -> {A,nil};
-viewl({deep,[H|T],M,SF})    -> {H,deepl(T,M,SF)}.
+viewl({deep,_,[H|T],M,SF})  -> {H,deepl(T,M,SF)}.
 
 deepl([],M,SF)  ->
     case viewl(M) of
@@ -111,17 +109,17 @@ deepl([],M,SF)  ->
 deepl(PR,M,SF)  ->
     deep(PR,M,SF).
 
--spec headl(finger_tree(E)) -> E.
+%%-spec headl(finger_tree(E)) -> E.
 headl(T) ->
     {H,_} = viewl(T),
     H.
 
--spec taill(finger_tree(E)) -> finger_tree(E).
+%%-spec taill(finger_tree(E)) -> finger_tree(E).
 taill(T) ->
     {_,T} = viewl(T),
     T.
 
--spec is_empty(finger_tree(any())) -> true|false.
+%%-spec is_empty(finger_tree(any())) -> true|false.
 is_empty(T) ->
     case viewl(T) of
         nil     -> true;
@@ -135,7 +133,7 @@ is_empty(T) ->
 
 %% @todo: reducer and pushl???
 
--spec app3(finger_tree(E),[E],finger_tree(E)) -> finger_tree(E).
+%%-spec app3(finger_tree(E),[E],finger_tree(E)) -> finger_tree(E).
 
 app3(empty,TS,XS)           -> reducer(fun pushl/2,TS,XS); %% @todo: optimize???
 app3(XS,TS,empty)           -> reducel(fun pushr/2,XS,TS);
@@ -146,7 +144,7 @@ app3({deep,_,PR1,M1,SF1},TS,{deep,_,PR2,M2,SF2}) ->
     M3 = app3(M1,to_nodes(SF1++TS++PR2),M2),
     deep(PR1,M3,SF2).
 
--spec to_nodes([E]) -> [tree_node(E)].
+%%-spec to_nodes([E]) -> [tree_node(E)].
 to_nodes([A,B])        -> [node2(A,B)];
 to_nodes([A,B,C])      -> [node3(A,B,C)];
 to_nodes([A,B,C,D])    -> [node2(A,B),node2(C,D)];
