@@ -14,12 +14,6 @@
 %% API
 -export([pushl/2, pushr/2, is_empty/1, headl/1, taill/1, concat/2, measure/1]).
 
-
--define(SUSP(Expr), fun() -> Expr end).
--define(FORCE(Expr),Expr()).
-
-%%-define(MOD,finger_tree_monoid@).
-
 -type tree_node(E) ::
 {node2,E,E}
 |{node3,E,E}.
@@ -34,14 +28,14 @@
 -spec pushr(finger_tree(E),E) -> finger_tree(E).
 
 pushl(A,empty)                  ->  {single,A};
-pushl(A,{single,B})             ->  {deep,[A],empty,[B]};
-pushl(A,{deep,[B,C,D,E],M,SF})  ->  {deep,[A,B],pushl({node3,C,D,E},M),SF};
-pushl(A,{deep,PR,M,SF})         ->  {deep,[A|PR],M,SF}.
+pushl(A,{single,B})             ->  deep([A],empty,[B]);
+pushl(A,{deep,[B,C,D,E],M,SF})  ->  deep([A,B],pushl({node3,C,D,E},M),SF);
+pushl(A,{deep,PR,M,SF})         ->  deep([A|PR],M,SF).
 
 pushr(empty,A)                  ->  {single,A};
-pushr({single,B},A)             ->  {deep,[B],empty,[A]};
-pushr({deep,PR,M,[E,D,C,B]},A)  ->  {deep,PR,pushr({node3,E,D,C},M),[B,A]};
-pushr({deep,PR,M,SF},A)         ->  {deep,PR,M,SF++[A]}.
+pushr({single,B},A)             ->  deep([B],empty,[A]);
+pushr({deep,PR,M,[E,D,C,B]},A)  ->  deep(PR,pushr({node3,E,D,C},M),[B,A]);
+pushr({deep,PR,M,SF},A)         ->  deep(PR,M,SF++[A]).
 
 
 %%
@@ -111,11 +105,11 @@ viewl({deep,[H|T],M,SF})    -> {H,deepl(T,M,SF)}.
 deepl([],M,SF)  ->
     case viewl(M) of
         nil     -> to_tree(SF);
-        {A,M1}  -> {deep,to_list(A),M1,SF}
+        {A,M1}  -> deep(to_list(A),M1,SF)
     end;
 
 deepl(PR,M,SF)  ->
-    {deep,PR,M,SF}.
+    deep(PR,M,SF).
 
 -spec headl(finger_tree(E)) -> E.
 headl(T) ->
@@ -148,15 +142,15 @@ app3(XS,TS,empty)           -> reducel(fun pushr/2,XS,TS);
 app3({single,X},TS,XS)      -> pushl(X,reducer(fun pushl/2,TS,XS));
 app3(XS,TS,{single,X})      -> pushr(reducel(fun pushr/2,XS,TS),X);
 
-app3({deep,PR1,M1,SF1},TS,{deep,PR2,M2,SF2}) ->
+app3({deep,_,PR1,M1,SF1},TS,{deep,_,PR2,M2,SF2}) ->
     M3 = app3(M1,to_nodes(SF1++TS++PR2),M2),
-    {deep,PR1,M3,SF2}.
+    deep(PR1,M3,SF2).
 
 -spec to_nodes([E]) -> [tree_node(E)].
-to_nodes([A,B])        -> [{node2,A,B}];
-to_nodes([A,B,C])      -> [{node3,A,B,C}];
-to_nodes([A,B,C,D])    -> [{node2,A,B},{node2,C,D}];
-to_nodes([A,B,C|T])    -> [{node3,A,B,C}|to_nodes(T)]. %% @todo: optimize???
+to_nodes([A,B])        -> [node2(A,B)];
+to_nodes([A,B,C])      -> [node3(A,B,C)];
+to_nodes([A,B,C,D])    -> [node2(A,B),node2(C,D)];
+to_nodes([A,B,C|T])    -> [node3(A,B,C)|to_nodes(T)]. %% @todo: optimize???
 
 
 concat(XS,TS) -> app3(XS,[],TS).
