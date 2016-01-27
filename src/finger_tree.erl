@@ -12,7 +12,7 @@
 -include("finger_tree.hrl").
 
 %% API
--export([pushl/2, pushr/2, is_empty/1, headl/1, taill/1, concat/2, measure/1]).
+-export([pushl/2, pushr/2, is_empty/1, headl/1, taill/1, concat/2, measure/1, empty/0]).
 
 -type tree_node(E) ::
 {node2,E,E}
@@ -23,6 +23,7 @@
     |{single,E}
     |{deep,any(),[E],finger_tree(tree_node(E)),[E]}.
 
+empty() -> empty.
 
 %%-spec pushl(E,finger_tree(E)) -> finger_tree(E).
 %%-spec pushr(finger_tree(E),E) -> finger_tree(E).
