@@ -68,7 +68,9 @@ reducer(Fun,{deep,_,PR,M,SF},Z) ->
     Fun1 = fun(A,B) -> reducer(Fun,A,B)  end,
     Fun2 = fun(A,B) -> reducer(Fun1,A,B) end,
     Fun1(PR,Fun2(M,Fun1(SF,Z)));
-
+%% NOTE: During recursive reducer calls, it is important that we restrict the level of nesting to 2,
+%% as shown above. We do not want to perform blind recursion, because
+%% reducer(fun(node(E),Z),finger_tree(E)) is NOT the same as reducer(fun(node(E),Z),finger_tree(node(E)))
 reducer(Fun,L,Z) when is_list(L) -> lists:foldr(Fun,Z,L).
 
 
@@ -99,7 +101,7 @@ to_list(T) -> reducer(fun(H,XS) -> [H|XS] end,T,[]).
 %% Navigation
 %%
 
-%% @todo: lazy view???
+%% @todo: lazy view??? -deepl and viewl call each other recursively
 
 %%
 %% Left implementation
@@ -136,7 +138,7 @@ taill(T) ->
 viewr(empty)                -> nil;
 viewr({single,A})           -> {A,empty};
 viewr({deep,_,PR,M,SF})     ->
-    %% TODO: Don't use lists for PR and SF, or use normal cons to push elements to SF
+    %% todo: Don't use lists for PR and SF, or use normal cons to push elements to SF
     [H|T] = lists:reverse(SF),
     T1 = lists:reverse(T),
     {H,deepr(PR,M,T1)}.
