@@ -8,4 +8,5 @@
 %%%-------------------------------------------------------------------
 -author("Kalin").
 
--compile({parse_transform,pmod_pt}).
+-include("finger_tree.erl").
+%-compile({parse_transform,finger_tree_transform}).
