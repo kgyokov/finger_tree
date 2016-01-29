@@ -108,13 +108,13 @@ to_list(T) -> reducer(fun(H,XS) -> [H|XS] end,T,[]).
 %%
 
 viewl(empty)                -> nil;
-viewl({single,A})           -> {A,empty};
-viewl({deep,_,[H|T],M,SF})  -> {H,deepl(T,M,SF)}.
+viewl({single,A})           -> {A,fun() -> empty end};
+viewl({deep,_,[H|T],M,SF})  -> {H,fun() -> deepl(T,M,SF) end}.
 
 deepl([],M,SF)  ->
     case viewl(M) of
         nil     -> to_tree(SF);
-        {A,M1}  -> deep(to_list(A),M1,SF)
+        {A,M1}  -> deep(to_list(A),M1(),SF)
     end;
 
 deepl(PR,M,SF)  ->
@@ -128,7 +128,7 @@ headl(T) ->
 -spec taill(finger_tree(E)) -> finger_tree(E).
 taill(T) ->
     {_,T1} = viewl(T),
-    T1.
+    T1().
 
 
 %%
@@ -136,17 +136,17 @@ taill(T) ->
 %%
 
 viewr(empty)                -> nil;
-viewr({single,A})           -> {A,empty};
+viewr({single,A})           -> {A,fun() -> empty end};
 viewr({deep,_,PR,M,SF})     ->
     %% todo: Don't use lists for PR and SF, or use normal cons to push elements to SF
     [H|T] = lists:reverse(SF),
     T1 = lists:reverse(T),
-    {H,deepr(PR,M,T1)}.
+    {H,fun() -> deepr(PR,M,T1) end}.
 
 deepr(PR,M,[])  ->
     case viewr(M) of
         nil     -> to_tree(PR);
-        {A,M1}  -> deep(PR,M1,to_list(A))
+        {A,M1}  -> deep(PR,M1(),to_list(A))
     end;
 
 deepr(PR,M,SF)  ->
@@ -160,7 +160,7 @@ headr(T) ->
 -spec tailr(finger_tree(E)) -> finger_tree(E).
 tailr(T) ->
     {_,T1} = viewr(T),
-    T1.
+    T1().
 
 -spec is_empty(finger_tree(any())) -> true|false.
 is_empty(T) ->
