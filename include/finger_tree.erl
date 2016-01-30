@@ -16,7 +16,7 @@
 
 
 %% API
--export([pushl/2, pushr/2, is_empty/1, headl/1, taill/1, concat/2, measure/1, empty/0, to_list/1, headr/1, tailr/1]).
+-export([pushl/2, pushr/2, is_empty/1, headl/1, taill/1, concat/2, measure/1, empty/0, to_list/1, headr/1, tailr/1, split_tree/3]).
 
 -type tree_node(V,E) ::
 {node2,V,E,E}
@@ -232,3 +232,50 @@ measure(empty)                  -> ?MOD:id();
 measure({single,X})             -> measure(X);
 measure({deep,V,_,_,_})         -> V;
 measure(X)                      -> ?MOD:ms(X).
+
+
+
+%%
+%% Splitting
+%%
+-type split(F,A)::{split,F,A,F}.
+
+-spec split_digit(Pred,V,L) -> {split,[A],A,[A]} when
+    Pred::fun((V) -> boolean()),
+    L::[A].
+
+split_digit(_,_,[A]) -> {split,[],A,[]};
+
+split_digit(Pred,V,[A|AS]) ->
+    V1 = ?MOD:as(V,measure(A)),
+    case Pred(V1) of
+        true    -> {split,[],A,AS};
+        false   ->
+            {split,L,X,R} = split_digit(Pred,V1,AS),
+            {split,[A|L],X,R}
+    end.
+
+-spec split_tree(Pred,V,T) -> split(T,A) when
+    Pred::fun((V) -> boolean()),
+    T::finger_tree(V,A).
+
+split_tree(_,_,{single,A}) -> {split,empty,A,empty};
+
+split_tree(Pred,V,{deep,_,PR,M,SF}) ->
+    VPR = ?MOD:as(V,measure(PR)),
+    case Pred(VPR) of
+        true ->
+            {split,L,X,R} = split_digit(Pred,V,PR),
+            {split,to_tree(L),X,deepl(R,M,SF)};
+        false ->
+            VM = ?MOD:as(VPR,measure(M)),
+            case Pred(VM) of
+                true ->
+                    {split,ML,XS,MR} = split_tree(Pred,VPR,M),
+                    {split,L,X,R} = split_digit(Pred,?MOD:as(VPR,measure(ML)),to_list(XS)),
+                    {split,deepr(PR,ML,L),X,deepl(R,MR,SF)};
+                false ->
+                    {split,L,X,R} = split_digit(Pred,VM,SF),
+                    {split,deepr(PR,M,L),X,to_tree(R)}
+            end
+    end.

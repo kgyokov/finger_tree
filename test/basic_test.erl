@@ -68,6 +68,15 @@ concat_test() ->
     C = list_monoid:concat(A1,B1),
     ?assertEqual(lists:seq(1,1000),left_recrusive_head(list_monoid,C)).
 
+split_test() ->
+    T = max_monoid:empty(),
+    L = lists:seq(1,100),
+    T1 = lists:foldl(fun(E,Acc) -> max_monoid:pushr(Acc,E) end, T, L),
+    {split,Left,A,Right} = max_monoid:split_tree(fun(V) -> V > 50 andalso V =/= min_infinity end,min_infinity,T1),
+    ?assertEqual(lists:seq(1,50),max_monoid:to_list(Left)),
+    ?assertEqual(51,A),
+    ?assertEqual(lists:seq(52,100),max_monoid:to_list(Right)).
+
 %% ============================================================================================
 %% ============================================================================================
 %% Utility functions
