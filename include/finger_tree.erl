@@ -18,14 +18,14 @@
 %% API
 -export([pushl/2, pushr/2, is_empty/1, headl/1, taill/1, concat/2, measure/1, empty/0, to_list/1, headr/1, tailr/1]).
 
--type tree_node(E) ::
-{node2,E,E}
-|{node3,E,E}.
+-type tree_node(V,E) ::
+{node2,V,E,E}
+|{node3,V,E,E}.
 
 -type finger_tree(V,E) ::
     empty
     |{single,E}
-    |{deep,any(),[E],finger_tree(V,tree_node(E)),[E]}.
+    |{deep,V,[E],finger_tree(V,tree_node(V,E)),[E]}.
 
 empty() -> empty.
 
@@ -50,13 +50,13 @@ pushr({deep,_,PR,M,SF},A)           ->  deep(PR,M,SF++[A]).
 -spec reducer(Fun,XS,Z) -> Z when
     Fun :: fun((E,Z) -> Z),
     XS ::
-        tree_node(E)
+        tree_node(_,E)
         |finger_tree(_,E)
         |[E].
 -spec reducel(Fun,Z,XS) -> Z when
     Fun :: fun((Z,E) -> Z),
     XS ::
-        tree_node(E)
+        tree_node(_,E)
         |finger_tree(_,E)
         |[E].
 
@@ -187,7 +187,7 @@ app3({deep,_,PR1,M1,SF1},TS,{deep,_,PR2,M2,SF2}) ->
     M3 = app3(M1,to_nodes(SF1++TS++PR2),M2),
     deep(PR1,M3,SF2).
 
--spec to_nodes([E]) -> [tree_node(E)].
+-spec to_nodes([E]) -> [tree_node(_,E)].
 to_nodes([A,B])        -> [node2(A,B)];
 to_nodes([A,B,C])      -> [node3(A,B,C)];
 to_nodes([A,B,C,D])    -> [node2(A,B),node2(C,D)];
