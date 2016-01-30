@@ -22,15 +22,15 @@
 {node2,E,E}
 |{node3,E,E}.
 
--type finger_tree(E) ::
+-type finger_tree(V,E) ::
     empty
     |{single,E}
-    |{deep,any(),[E],finger_tree(tree_node(E)),[E]}.
+    |{deep,any(),[E],finger_tree(V,tree_node(E)),[E]}.
 
 empty() -> empty.
 
--spec pushl(E,finger_tree(E)) -> finger_tree(E).
--spec pushr(finger_tree(E),E) -> finger_tree(E).
+-spec pushl(E,finger_tree(V,E)) -> finger_tree(V,E).
+-spec pushr(finger_tree(V,E),E) -> finger_tree(V,E).
 
 pushl(A,empty)                      ->  {single,A};
 pushl(A,{single,B})                 ->  deep([A],empty,[B]);
@@ -51,13 +51,13 @@ pushr({deep,_,PR,M,SF},A)           ->  deep(PR,M,SF++[A]).
     Fun :: fun((E,Z) -> Z),
     XS ::
         tree_node(E)
-        |finger_tree(E)
+        |finger_tree(_,E)
         |[E].
 -spec reducel(Fun,Z,XS) -> Z when
     Fun :: fun((Z,E) -> Z),
     XS ::
         tree_node(E)
-        |finger_tree(E)
+        |finger_tree(_,E)
         |[E].
 
 reducer(Fun,{node2,_,A,B},Z)    -> Fun(A,Fun(B,Z));
@@ -91,8 +91,8 @@ reducel(Fun,Z,L) when is_list(L) ->
 %% Conversion
 %%
 
--spec to_tree([E]) -> finger_tree(E).
--spec to_list(finger_tree(E)) -> [E].
+-spec to_tree([E]) -> finger_tree(_,E).
+-spec to_list(finger_tree(_,E)) -> [E].
 to_tree(L) when is_list(L) -> lists:foldr(fun pushl/2,empty,L).
 to_list(T) -> reducer(fun(H,XS) -> [H|XS] end,T,[]).
 
@@ -120,12 +120,12 @@ deepl([],M,SF)  ->
 deepl(PR,M,SF)  ->
     deep(PR,M,SF).
 
--spec headl(finger_tree(E)) -> E.
+-spec headl(finger_tree(_,E)) -> E.
 headl(T) ->
     {H,_} = viewl(T),
     H.
 
--spec taill(finger_tree(E)) -> finger_tree(E).
+-spec taill(finger_tree(V,E)) -> finger_tree(V,E).
 taill(T) ->
     {_,T1} = viewl(T),
     T1().
@@ -152,17 +152,17 @@ deepr(PR,M,[])  ->
 deepr(PR,M,SF)  ->
     deep(PR,M,SF).
 
--spec headr(finger_tree(E)) -> E.
+-spec headr(finger_tree(_,E)) -> E.
 headr(T) ->
     {H,_} = viewr(T),
     H.
 
--spec tailr(finger_tree(E)) -> finger_tree(E).
+-spec tailr(finger_tree(V,E)) -> finger_tree(V,E).
 tailr(T) ->
     {_,T1} = viewr(T),
     T1().
 
--spec is_empty(finger_tree(any())) -> true|false.
+-spec is_empty(finger_tree(_,any())) -> true|false.
 is_empty(T) ->
     case viewl(T) of
         nil     -> true;
@@ -176,7 +176,7 @@ is_empty(T) ->
 
 %% @todo: reducer and pushl???
 
--spec app3(finger_tree(E),[E],finger_tree(E)) -> finger_tree(E).
+-spec app3(finger_tree(V,E),[E],finger_tree(V,E)) -> finger_tree(V,E).
 
 app3(empty,TS,XS)           -> reducer(fun pushl/2,TS,XS); %% @todo: optimize???
 app3(XS,TS,empty)           -> reducel(fun pushr/2,XS,TS);
