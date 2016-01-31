@@ -16,7 +16,8 @@
 
 
 %% API
--export([pushl/2, pushr/2, is_empty/1, headl/1, taill/1, concat/2, measure/1, empty/0, to_list/1, headr/1, tailr/1, split_tree/3]).
+-export([pushl/2, pushr/2, is_empty/1, headl/1, taill/1, concat/2, measure/1, empty/0,
+    to_list/1, headr/1, tailr/1, split_tree/3, split/2]).
 
 -type tree_node(V,E) ::
 {node2,V,E,E}
@@ -240,9 +241,20 @@ measure(X)                      -> ?MOD:ms(X).
 %%
 -type split(F,A)::{split,F,A,F}.
 
--spec split_digit(Pred,V,L) -> {split,[A],A,[A]} when
-    Pred::fun((V) -> boolean()),
-    L::[A].
+-spec split(Pred,T) -> {T,T} when
+    Pred::fun((V) -> true|false),
+    T::finger_tree(V,_).
+
+split(_,empty)   -> {empty,empty};
+split(Pred,T)       ->
+    {split,L,X,R} = split_tree(Pred,?MOD:id(),T),
+    case Pred(measure(T)) of
+        true    -> {L,pushl(X,R)};
+        false   -> {T,empty}
+    end.
+
+-spec split_digit(Pred,V,[A]) -> {split,[A],A,[A]} when
+    Pred::fun((V) -> boolean()).
 
 split_digit(_,_,[A]) -> {split,[],A,[]};
 
