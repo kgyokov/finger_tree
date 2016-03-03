@@ -14,6 +14,6 @@ A much better solution than passing an extra argument everywhere would be the us
 
 https://github.com/erlang/pmod_transform. 
 
-Tried using them, however I was not able to get them to work. One possible reason is the use of dynamically created *Funs*.
+Tried using them, however I was not able to get them to work. One possible reason is the use of dynamically created *Funs* and the way the paremeterized modules implementation adds an extra argument to each function in a module.
 
 Maybe Elixir's protocols could solve this problem (they seem to be similar in purpose as Haskell's type classes).
