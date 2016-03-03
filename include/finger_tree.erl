@@ -242,7 +242,7 @@ measure(X)                      -> ?MOD:ms(X).
 -type split(F,A)::{split,F,A,F}.
 
 -spec split(Pred,T) -> {T,T} when
-    Pred::fun((V) -> true|false),
+    Pred::fun((V) -> boolean()),
     T::finger_tree(V,_).
 
 split(_,empty)   -> {empty,empty};
